@@ -57,21 +57,7 @@ pub const Transformer = struct {
         const kv_dim = config.kv_dim();
         const hidden_dim = config.hidden_dim;
 
-        const state_data = struct {
-            x: []f32,
-            xb: []f32,
-            xb2: []f32,
-            hb: []f32,
-            hb2: []f32,
-            q: []f32,
-            k: []f32,
-            v: []f32,
-            logits: []f32,
-            key_cache: []types.F16,
-            value_cache: []types.F16,
-            rope_cos: []f32,
-            rope_sin: []f32,
-        }{
+        const state_data = TransformerState{
             .x = try allocator.alloc(f32, dim),
             .xb = try allocator.alloc(f32, dim),
             .xb2 = try allocator.alloc(f32, dim),
