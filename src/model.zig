@@ -2,6 +2,23 @@ const std = @import("std");
 const types = @import("types.zig");
 const gguf = @import("gguf.zig");
 
+// Define the state struct separately to avoid type conflicts
+pub const TransformerState = struct {
+    x: []f32,
+    xb: []f32,
+    xb2: []f32,
+    hb: []f32,
+    hb2: []f32,
+    q: []f32,
+    k: []f32,
+    v: []f32,
+    logits: []f32,
+    key_cache: []types.F16,
+    value_cache: []types.F16,
+    rope_cos: []f32,
+    rope_sin: []f32,
+};
+
 pub const Transformer = struct {
     allocator: std.mem.Allocator,
     config: types.Config,
@@ -22,21 +39,7 @@ pub const Transformer = struct {
         quant: @import("quant.zig").Quantizer,
     },
 
-    state: struct {
-        x: []f32,
-        xb: []f32,
-        xb2: []f32,
-        hb: []f32,
-        hb2: []f32,
-        q: []f32,
-        k: []f32,
-        v: []f32,
-        logits: []f32,
-        key_cache: []types.F16,
-        value_cache: []types.F16,
-        rope_cos: []f32,
-        rope_sin: []f32,
-    },
+    state: TransformerState,
 
     pub fn init(allocator: std.mem.Allocator, gguf_model: *gguf.GGUFModel, quant_type: @import("quant.zig").Quantizer) !Transformer {
         const config = types.Config{
