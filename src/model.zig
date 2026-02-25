@@ -54,7 +54,21 @@ pub const Transformer = struct {
         const kv_dim = config.kv_dim();
         const hidden_dim = config.hidden_dim;
 
-        const state = .{
+        const state = struct {
+            x: []f32,
+            xb: []f32,
+            xb2: []f32,
+            hb: []f32,
+            hb2: []f32,
+            q: []f32,
+            k: []f32,
+            v: []f32,
+            logits: []f32,
+            key_cache: []types.F16,
+            value_cache: []types.F16,
+            rope_cos: []f32,
+            rope_sin: []f32,
+        }{
             .x = try allocator.alloc(f32, dim),
             .xb = try allocator.alloc(f32, dim),
             .xb2 = try allocator.alloc(f32, dim),
@@ -144,6 +158,7 @@ pub const Transformer = struct {
     }
     
     fn attention(self: *Transformer, layer_idx: usize, pos: usize) void {
+        _ = self;
         _ = layer_idx;
         _ = pos;
         // Placeholder for attention computation
@@ -151,6 +166,7 @@ pub const Transformer = struct {
     }
     
     fn feedForward(self: *Transformer, layer_idx: usize) void {
+        _ = self;
         _ = layer_idx;
         // Placeholder for feed-forward network computation
         // This would implement the MLP layers
