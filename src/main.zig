@@ -238,9 +238,9 @@ pub fn main() !void {
     var pos: usize = 0;
     var token: types.Token = 0;
     if (tokens.len > 0) {
-        var i: usize = 0;
-        while (i < tokens.len) : (i += 1) {
-            token = tokens[i];
+        var j: usize = 0;
+        while (j < tokens.len) : (j += 1) {
+            token = tokens[j];
             _ = transformer.forward(token, pos);
             pos += 1;
         }
