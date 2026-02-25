@@ -143,14 +143,14 @@ pub const Transformer = struct {
         self.feedForward(layer_idx);
     }
     
-    fn attention(self: *Transformer, _layer_idx: usize, _pos: usize) void {
+    fn attention(self: *Transformer, layer_idx: usize, pos: usize) void {
         _ = layer_idx;
         _ = pos;
         // Placeholder for attention computation
         // This would implement the multi-head attention mechanism
     }
     
-    fn feedForward(self: *Transformer, _layer_idx: usize) void {
+    fn feedForward(self: *Transformer, layer_idx: usize) void {
         _ = layer_idx;
         // Placeholder for feed-forward network computation
         // This would implement the MLP layers
