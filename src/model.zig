@@ -54,7 +54,7 @@ pub const Transformer = struct {
         const kv_dim = config.kv_dim();
         const hidden_dim = config.hidden_dim;
 
-        const state = struct {
+        const state_data = struct {
             x: []f32,
             xb: []f32,
             xb2: []f32,
