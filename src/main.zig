@@ -173,6 +173,106 @@ pub fn main() !void {
 
     std.debug.print("Threads: {d}\n", .{threads});
 
+    // Parse remaining arguments for generation
+    var prompt: ?[]const u8 = null;
+    var max_tokens: usize = 256;
+    var temperature: f32 = 0.8;
+    var topp: f32 = 0.9;
+    var seed: u64 = 42;
+    
+    i = 1;
+    while (i < args.len) : (i += 1) {
+        const arg = args[i];
+        
+        if (std.mem.eql(u8, arg, "-p") and i + 1 < args.len) {
+            i += 1;
+            prompt = args[i];
+        } else if (std.mem.eql(u8, arg, "-n") and i + 1 < args.len) {
+            i += 1;
+            max_tokens = try std.fmt.parseInt(usize, args[i], 10);
+        } else if (std.mem.eql(u8, arg, "-t") and i + 1 < args.len) {
+            i += 1;
+            temperature = try std.fmt.parseFloat(f32, args[i]);
+        } else if (std.mem.eql(u8, arg, "-k") and i + 1 < args.len) {
+            i += 1;
+            topp = try std.fmt.parseFloat(f32, args[i]);
+        } else if (std.mem.eql(u8, arg, "-s") and i + 1 < args.len) {
+            i += 1;
+            seed = @as(u64, @intCast(try std.fmt.parseInt(i64, args[i], 10)));
+        }
+    }
+    
+    const prompt_text = prompt orelse {
+        std.debug.print("Error: No prompt provided (-p argument required)\n", .{});
+        std.process.exit(1);
+    };
+    
+    // Initialize tokenizer
+    var tokenizer = @import("tokenizer.zig").Tokenizer.init(allocator);
+    defer tokenizer.deinit();
+    
+    // Initialize model
+    var transformer = @import("model.zig").Transformer.init(allocator, &gguf_model, selected_quant) catch {
+        std.debug.print("Error: Failed to initialize model\n", .{});
+        std.process.exit(1);
+    };
+    defer transformer.deinit();
+    
+    // Initialize sampler
+    var sampler = @import("sampler.zig").Sampler.init(
+        transformer.config.vocab_size,
+        temperature,
+        topp,
+        seed
+    );
+    
+    // Encode prompt
+    const tokens = try tokenizer.encode(prompt_text);
+    defer allocator.free(tokens);
+    
+    std.debug.print("Prompt: {d} tokens, generating up to {d} tokens (temp={d:.2}, top_p={d:.2})\n", 
+        .{tokens.len, max_tokens, temperature, topp});
+    std.debug.print("---\n", .{});
+    
+    // Process prompt tokens (prefill)
+    var pos: usize = 0;
+    var token: types.Token = 0;
+    if (tokens.len > 0) {
+        var i: usize = 0;
+        while (i < tokens.len) : (i += 1) {
+            token = tokens[i];
+            _ = transformer.forward(token, pos);
+            pos += 1;
+        }
+    }
+    
+    // Generate new tokens
+    var generated_tokens: usize = 0;
+    while (generated_tokens < max_tokens) {
+        // Forward pass
+        const logits = transformer.forward(token, pos);
+        
+        // Sample next token
+        token = sampler.sample(logits);
+        
+        // Decode and print token
+        const token_str = tokenizer.decode(token) catch {
+            std.debug.print("<UNK>");
+            continue;
+        };
+        defer allocator.free(token_str);
+        std.debug.print("{s}", .{token_str});
+        std.debug.flush();
+        
+        // Check for end-of-sequence token (typically 0 or 2 for many models)
+        if (token == 0 or token == 2) break;
+        
+        pos += 1;
+        generated_tokens += 1;
+    }
+    
+    std.debug.print("\n", .{});
+    
     // Run
     if (benchmark) {
         // Benchmark code
