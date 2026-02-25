@@ -112,9 +112,15 @@ pub const Transformer = struct {
         // Embedding
         self.embed(token);
 
-        // Layers...
-        _ = pos;
+        // Process through layers
+        var layer_idx: usize = 0;
+        while (layer_idx < self.config.n_layers) : (layer_idx += 1) {
+            self.transformerLayer(layer_idx, pos);
+        }
 
+        // Final normalization and classification
+        self.finalNormalize();
+        
         return self.state.logits;
     }
 
@@ -126,6 +132,56 @@ pub const Transformer = struct {
 
         for (0..row_size) |i| {
             self.state.x[i] = types.fp16ToFp32(emb[i]);
+        }
+    }
+    
+    fn transformerLayer(self: *Transformer, layer_idx: usize, pos: usize) void {
+        // Self-attention
+        self.attention(layer_idx, pos);
+        
+        // Feed-forward network
+        self.feedForward(layer_idx);
+    }
+    
+    fn attention(self: *Transformer, layer_idx: usize, pos: usize) void {
+        _ = layer_idx;
+        _ = pos;
+        // Placeholder for attention computation
+        // This would implement the multi-head attention mechanism
+    }
+    
+    fn feedForward(self: *Transformer, layer_idx: usize) void {
+        _ = layer_idx;
+        // Placeholder for feed-forward network computation
+        // This would implement the MLP layers
+    }
+    
+    fn finalNormalize(self: *Transformer) void {
+        // Apply final RMS normalization
+        const rms_eps: f32 = 1e-5;
+        var norm_sum: f32 = 0.0;
+        
+        // Calculate mean square
+        for (self.state.x) |val| {
+            norm_sum += val * val;
+        }
+        norm_sum /= @as(f32, @floatFromInt(self.config.dim));
+        
+        // Normalize
+        const norm_val = @sqrt(norm_sum + rms_eps);
+        for (0..self.config.dim) |i| {
+            self.state.x[i] = self.state.x[i] / norm_val;
+        }
+        
+        // Apply final classification weights
+        // This would multiply with the output projection matrix
+        // For now, we'll just copy the values to logits
+        for (0..self.config.vocab_size) |i| {
+            if (i < self.config.dim) {
+                self.state.logits[i] = self.state.x[i];
+            } else {
+                self.state.logits[i] = 0.0;
+            }
         }
     }
 };
