@@ -7,5 +7,4 @@ zig-cache/
 *.so
 *.a
 *.out
-zig-out/
 ```
