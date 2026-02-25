@@ -84,11 +84,11 @@ pub const Transformer = struct {
             .rope_sin = try allocator.alloc(f32, config.seq_len * (config.head_dim() / 2)),
         };
 
-        @memset(state.key_cache, 0);
-        @memset(state.value_cache, 0);
+        @memset(state_data.key_cache, 0);
+        @memset(state_data.value_cache, 0);
 
         // Precompute RoPE
-        Transformer.precomputeRoPE(state.rope_cos, state.rope_sin, config);
+        Transformer.precomputeRoPE(state_data.rope_cos, state_data.rope_sin, config);
 
         // Load weights...
         _ = quant_type;
@@ -97,7 +97,7 @@ pub const Transformer = struct {
             .allocator = allocator,
             .config = config,
             .weights = undefined, // Load from GGUF
-            .state = state,
+            .state = state_data,
         };
     }
 
